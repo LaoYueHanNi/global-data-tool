@@ -1,6 +1,6 @@
-# Global Data Tool - 全球城市时间搜索
+# Global Data Tool - 全球城市时间搜索与汇率换算
 
-轻量级 Windows 桌面应用，搜索全球城市并显示当地时间。
+轻量级 Windows 桌面应用，支持全球城市时间查询与实时汇率换算。
 
 ## 功能特性
 
@@ -12,13 +12,14 @@
 - 最近搜索记录（本地持久化）
 - 点击城市显示详细信息
 - 数据库 gzip 压缩嵌入 exe，首次运行自动解压
+- 实时汇率换算，支持 158 种货币
 
 ## 技术栈
 
 - **前端**: Vue 3 + TypeScript + Vite
 - **后端**: Rust + Tauri v2
 - **数据库**: SQLite + FTS5 全文搜索（gzip 压缩嵌入）
-- **数据源**: GeoNames 离线数据（繁简转换 via OpenCC）
+- **数据源**: GeoNames 离线数据（繁简转换 via OpenCC）、open.er-api.com 实时汇率
 
 ## 快速开始
 
@@ -80,7 +81,7 @@ python scripts/build_db.py
 ```
 global-data-tool/
 ├── src/                    # Vue 前端
-│   ├── components/         # 组件
+│   ├── components/         # 组件（CityCard, CurrencyPage...）
 │   ├── types/              # TypeScript 类型
 │   ├── utils/              # 工具函数（时区计算）
 │   └── styles/             # 样式
