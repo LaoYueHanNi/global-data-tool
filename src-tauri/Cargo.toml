@@ -1,0 +1,16 @@
+[package]
+name = "global-data-tool"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tauri = { version = "2", features = [] }
+rusqlite = { version = "0.31", features = ["bundled"] }
+flate2 = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = "0.4"
+chrono-tz = "0.10"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
