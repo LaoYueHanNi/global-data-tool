@@ -1,10 +1,11 @@
-use crate::db::Database;
-use crate::models::{CityResult, SearchResponse};
+use crate::db::{Database, ExchangeDb};
+use crate::models::{CityResult, ExchangeRates, SearchResponse};
 use std::sync::Mutex;
 use tauri::State;
 
 pub struct AppState {
     pub db: Mutex<Database>,
+    pub exchange_db: Mutex<ExchangeDb>,
 }
 
 #[tauri::command]
@@ -34,4 +35,16 @@ pub fn get_recent_cities(state: State<AppState>) -> Result<Vec<CityResult>, Stri
 pub fn add_recent_city(state: State<AppState>, city: CityResult) -> Result<(), String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
     db.add_recent_city(&city).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_exchange_rates(state: State<AppState>) -> Result<Option<ExchangeRates>, String> {
+    let db = state.exchange_db.lock().map_err(|e| e.to_string())?;
+    db.get_rates().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn save_exchange_rates(state: State<AppState>, rates: ExchangeRates) -> Result<(), String> {
+    let db = state.exchange_db.lock().map_err(|e| e.to_string())?;
+    db.save_rates(&rates).map_err(|e| e.to_string())
 }

@@ -1,4 +1,4 @@
-use crate::models::{CityResult, CitySummary, CountryWithCities};
+use crate::models::{CityResult, CitySummary, CountryWithCities, ExchangeRates};
 use crate::timecalc;
 use rusqlite::{Connection, Result, params};
 use std::path::Path;
@@ -379,4 +379,58 @@ struct CitySummaryRow {
     timezone: String,
     is_capital: bool,
     feature_code: Option<String>,
+}
+
+pub struct ExchangeDb {
+    conn: Connection,
+}
+
+impl ExchangeDb {
+    pub fn open(db_path: &Path) -> Result<Self> {
+        let conn = Connection::open(db_path)?;
+        Ok(ExchangeDb { conn })
+    }
+
+    pub fn init(&self) -> Result<()> {
+        self.conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS exchange_rates (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                base TEXT NOT NULL,
+                rates_json TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                next_update TEXT NOT NULL
+            );"
+        )?;
+        Ok(())
+    }
+
+    pub fn get_rates(&self) -> Result<Option<ExchangeRates>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT base, rates_json, updated_at, next_update FROM exchange_rates WHERE id = 1"
+        )?;
+
+        let mut rows = stmt.query_map([], |row| {
+            Ok(ExchangeRates {
+                base: row.get(0)?,
+                rates: serde_json::from_str(&row.get::<_, String>(1)?).unwrap_or_default(),
+                updated_at: row.get(2)?,
+                next_update: row.get(3)?,
+            })
+        })?;
+
+        match rows.next() {
+            Some(Ok(r)) => Ok(Some(r)),
+            _ => Ok(None),
+        }
+    }
+
+    pub fn save_rates(&self, rates: &ExchangeRates) -> Result<()> {
+        let rates_json = serde_json::to_string(&rates.rates).unwrap_or_default();
+        self.conn.execute(
+            "INSERT OR REPLACE INTO exchange_rates (id, base, rates_json, updated_at, next_update)
+             VALUES (1, ?1, ?2, ?3, ?4)",
+            params![rates.base, rates_json, rates.updated_at, rates.next_update],
+        )?;
+        Ok(())
+    }
 }

@@ -11,6 +11,19 @@ DB_PATH = os.path.join(os.path.dirname(__file__), "..", "src-tauri", "data", "ci
 
 cc = OpenCC("t2s")  # 繁体转简体
 
+# ── 数据过滤规则 ──────────────────────────────────────────────
+# GeoNames 数据中港澳台地区被标记为独立的 ISO 代码，
+# 此处将其纠正为中国（CN），确保搜索"中国"时包含这些城市。
+REGION_REMAP = {
+    "HK": "CN",  # 香港 → 中国
+    "MO": "CN",  # 澳门 → 中国
+    "TW": "CN",  # 台湾 → 中国
+}
+
+def correct_country_code(code: str) -> str:
+    """纠正港澳台地区的 ISO 归属为 CN，其他地区不变。"""
+    return REGION_REMAP.get(code, code)
+
 
 def create_tables(conn: sqlite3.Connection) -> None:
     """Create database tables and FTS5 index."""
@@ -102,7 +115,8 @@ def load_cities(conn: sqlite3.Connection) -> set:
             longitude = float(parts[5])
             feature_class = parts[6]
             feature_code = parts[7]
-            country_code = parts[8]
+            original_country = parts[8]
+            country_code = correct_country_code(original_country)
             population = int(parts[14]) if parts[14] else 0
             timezone = parts[17]
 
@@ -110,6 +124,12 @@ def load_cities(conn: sqlite3.Connection) -> set:
                 continue
 
             is_capital = 1 if feature_code == "PPLC" else 0
+
+            # 港澳台城市纠正归属后，移除其首都标记（如台北不再标记为中国首都）
+            if original_country in REGION_REMAP:
+                is_capital = 0
+                if feature_code == "PPLC":
+                    feature_code = None
 
             conn.execute(
                 "INSERT OR REPLACE INTO cities (geonameid, name, country_iso, latitude, longitude, timezone, population, is_capital, feature_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",

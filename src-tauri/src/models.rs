@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct CityResult {
@@ -43,4 +44,12 @@ pub struct CitySummary {
 pub struct SearchResponse {
     pub cities: Vec<CityResult>,
     pub countries: Vec<CountryWithCities>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ExchangeRates {
+    pub base: String,
+    pub rates: HashMap<String, f64>,
+    pub updated_at: String,
+    pub next_update: String,
 }

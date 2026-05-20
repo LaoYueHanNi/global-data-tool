@@ -2,11 +2,13 @@
 import { ref } from "vue";
 import SideTab from "./components/SideTab.vue";
 import CityTimePage from "./components/CityTimePage.vue";
+import CurrencyPage from "./components/CurrencyPage.vue";
 
 const activeTab = ref("city-time");
 
 const tabs = [
   { id: "city-time", icon: "🕐", label: "City Time" },
+  { id: "currency", icon: "💱", label: "汇率" },
 ];
 </script>
 
@@ -15,6 +17,7 @@ const tabs = [
     <SideTab :tabs="tabs" :active-tab="activeTab" @switch="activeTab = $event" />
     <div class="content-area">
       <CityTimePage v-show="activeTab === 'city-time'" />
+      <CurrencyPage v-show="activeTab === 'currency'" />
     </div>
   </div>
 </template>

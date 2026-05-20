@@ -38,3 +38,10 @@ export interface SearchResponse {
   cities: CityResult[];
   countries: CountryWithCities[];
 }
+
+export interface ExchangeRates {
+  base: string;
+  rates: Record<string, number>;
+  updated_at: string;
+  next_update: string;
+}

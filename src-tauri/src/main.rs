@@ -8,14 +8,14 @@ mod models;
 mod timecalc;
 
 use commands::AppState;
-use db::Database;
+use db::{Database, ExchangeDb};
 use flate2::read::GzDecoder;
 use std::sync::Mutex;
 use tauri::Manager;
 
 // 嵌入压缩后的数据库文件
 const DB_DATA: &[u8] = include_bytes!("../data/data.db.gz");
-const DB_VERSION: &str = "4";
+const DB_VERSION: &str = "6";
 
 fn decompress_db(compressed: &[u8], dest: &std::path::Path) -> Result<(), String> {
     let mut decoder = GzDecoder::new(compressed);
@@ -49,8 +49,13 @@ fn main() {
             let db = Database::open(&db_path).expect("Failed to open database");
             db.init_recent_table().expect("Failed to init recent table");
 
+            let exchange_db_path = data_dir.join("exchange.db");
+            let exchange_db = ExchangeDb::open(&exchange_db_path).expect("Failed to open exchange db");
+            exchange_db.init().expect("Failed to init exchange db");
+
             app.manage(AppState {
                 db: Mutex::new(db),
+                exchange_db: Mutex::new(exchange_db),
             });
 
             Ok(())
@@ -59,6 +64,8 @@ fn main() {
             commands::search_cities,
             commands::get_recent_cities,
             commands::add_recent_city,
+            commands::get_exchange_rates,
+            commands::save_exchange_rates,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
