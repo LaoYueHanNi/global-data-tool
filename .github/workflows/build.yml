@@ -1,0 +1,50 @@
+name: Build
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch to build
+        required: true
+        default: main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install WiX (for MSI)
+        run: choco install wixtoolset -y --no-progress
+
+      - name: Install JS dependencies
+        run: pnpm install
+
+      - name: Build Tauri app
+        run: pnpm tauri build --bundles msi
+
+      - name: Upload MSI installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: global-data-tool
+          path: src-tauri/target/release/bundle/msi/*.msi
