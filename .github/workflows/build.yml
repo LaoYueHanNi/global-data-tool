@@ -1,5 +1,8 @@
 name: Build
 on:
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
     inputs:
       branch:
@@ -43,7 +46,15 @@ jobs:
       - name: Build Tauri app
         run: pnpm tauri build --bundles msi
 
-      - name: Upload MSI installer
+      - name: Upload MSI to Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: src-tauri/target/release/bundle/msi/*.msi
+          generate_release_notes: true
+
+      - name: Upload MSI as artifact
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
         uses: actions/upload-artifact@v4
         with:
           name: global-data-tool
