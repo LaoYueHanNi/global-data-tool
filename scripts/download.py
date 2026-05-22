@@ -5,7 +5,6 @@ import zipfile
 
 BASE_URL = "https://download.geonames.org/export/dump/"
 DATA_DIR = os.path.join(os.path.dirname(__file__), "raw_data")
-PROXY = "http://127.0.0.1:7897"
 
 FILES = [
     ("cities5000.zip", "cities5000.txt"),
@@ -17,12 +16,7 @@ FILES = [
 def download_file(url: str, dest: str) -> None:
     """Download a file from URL to destination."""
     print(f"Downloading {url}...")
-    proxy_handler = urllib.request.ProxyHandler({
-        "http": PROXY,
-        "https": PROXY,
-    })
-    opener = urllib.request.build_opener(proxy_handler)
-    with opener.open(url) as response:
+    with urllib.request.urlopen(url) as response:
         with open(dest, "wb") as f:
             f.write(response.read())
     print(f"  Saved to {dest}")
