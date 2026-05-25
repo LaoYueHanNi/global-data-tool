@@ -1,5 +1,74 @@
 import { ref, onMounted, onUnmounted } from "vue";
 
+export function getOffsetMinutes(timezone: string, date: Date): number {
+  const tzDate = new Date(date.toLocaleString("en-US", { timeZone: timezone }));
+  const utcDate = new Date(date.toLocaleString("en-US", { timeZone: "UTC" }));
+  return (tzDate.getTime() - utcDate.getTime()) / 60000;
+}
+
+export function getDateInTimezone(timezone: string): string {
+  return new Intl.DateTimeFormat("zh-CN", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+export function convertTimeBetweenZones(
+  timeStr: string,
+  fromTz: string,
+  toTz: string
+): { time: string; date: string; dayDiff: number } {
+  try {
+    const [hours, minutes] = timeStr.split(":").map(Number);
+
+    const now = new Date();
+    const dateParts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: fromTz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(now);
+
+    const localDateStr = `${dateParts}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
+    const localDate = new Date(localDateStr);
+    const localOffset = -localDate.getTimezoneOffset();
+    const fromOffset = getOffsetMinutes(fromTz, localDate);
+    const utcMs = localDate.getTime() + (localOffset - fromOffset) * 60000;
+    const targetDate = new Date(utcMs);
+
+    const time = new Intl.DateTimeFormat("zh-CN", {
+      timeZone: toTz,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(targetDate);
+
+    const date = new Intl.DateTimeFormat("zh-CN", {
+      timeZone: toTz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(targetDate);
+
+    const srcDate = new Intl.DateTimeFormat("zh-CN", {
+      timeZone: fromTz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(now);
+
+    const dayDiff = Math.round(
+      (new Date(date).getTime() - new Date(srcDate).getTime()) / 86400000
+    );
+
+    return { time, date, dayDiff };
+  } catch {
+    return { time: "--:--", date: "----/--/--", dayDiff: 0 };
+  }
+}
+
 // 获取指定时区的当前时间
 export function getTimeInTimezone(timezone: string): { time: string; date: string; offset: string } {
   try {

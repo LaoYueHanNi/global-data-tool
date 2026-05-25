@@ -11,6 +11,7 @@ defineProps<{
 const emit = defineEmits<{
   select: [city: CityResult];
   searchCountryCity: [city: CitySummary];
+  contextmenu: [city: CityResult | CitySummary, e: MouseEvent];
 }>();
 
 const now = ref(Date.now());
@@ -40,6 +41,7 @@ function getRealTime(timezone: string) {
         :key="city.geonameid"
         class="country-city"
         @click="emit('searchCountryCity', city)"
+        @contextmenu.prevent="emit('contextmenu', city, $event)"
       >
         <span class="capital-mark" v-if="city.is_capital">★</span>
         <span class="city-name">{{ city.name_cn || city.name }}</span>
@@ -53,6 +55,7 @@ function getRealTime(timezone: string) {
         :key="city.geonameid"
         :city="city"
         @select="emit('select', city)"
+        @contextmenu="(city: CityResult, e: MouseEvent) => emit('contextmenu', city, e)"
       />
     </div>
     <div v-if="result.cities.length === 0" class="no-result">

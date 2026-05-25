@@ -9,6 +9,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: [];
+  contextmenu: [city: CityResult, e: MouseEvent];
 }>();
 
 const now = ref(Date.now());
@@ -55,7 +56,7 @@ function getFeatureLabel(code: string | null): string {
 </script>
 
 <template>
-  <div class="overlay" @click.self="emit('close')">
+  <div class="overlay" @click.self="emit('close')" @contextmenu.prevent="emit('contextmenu', city, $event)">
     <div class="detail-card">
       <button class="close-btn" @click="emit('close')">✕</button>
 

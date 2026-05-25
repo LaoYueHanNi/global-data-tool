@@ -3,6 +3,7 @@ import { ref } from "vue";
 import SideTab from "./components/SideTab.vue";
 import CityTimePage from "./components/CityTimePage.vue";
 import CurrencyPage from "./components/CurrencyPage.vue";
+import ContextMenuProvider from "./components/ContextMenuProvider.vue";
 
 const activeTab = ref("city-time");
 
@@ -13,13 +14,15 @@ const tabs = [
 </script>
 
 <template>
-  <div class="app-shell">
-    <SideTab :tabs="tabs" :active-tab="activeTab" @switch="activeTab = $event" />
-    <div class="content-area">
-      <CityTimePage v-show="activeTab === 'city-time'" />
-      <CurrencyPage v-show="activeTab === 'currency'" />
+  <ContextMenuProvider>
+    <div class="app-shell" @contextmenu.prevent>
+      <SideTab :tabs="tabs" :active-tab="activeTab" @switch="activeTab = $event" />
+      <div class="content-area">
+        <CityTimePage v-show="activeTab === 'city-time'" />
+        <CurrencyPage v-show="activeTab === 'currency'" />
+      </div>
     </div>
-  </div>
+  </ContextMenuProvider>
 </template>
 
 <style>

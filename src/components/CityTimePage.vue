@@ -4,6 +4,8 @@ import { invoke } from "@tauri-apps/api/core";
 import SearchBox from "./SearchBox.vue";
 import ResultList from "./ResultList.vue";
 import CityDetail from "./CityDetail.vue";
+import TimezoneConverter from "./TimezoneConverter.vue";
+import { useContextMenu } from "./ContextMenuProvider.vue";
 import { getTimeInTimezone } from "../utils/time";
 import type { SearchResponse, CityResult, CitySummary } from "../types";
 
@@ -11,7 +13,10 @@ const searchResult = ref<SearchResponse | null>(null);
 const recentCities = ref<CityResult[]>([]);
 const triggerQuery = ref("");
 const selectedCity = ref<CityResult | null>(null);
+const converterCity = ref<CityResult | null>(null);
 const now = ref(Date.now());
+
+const { showMenu } = useContextMenu();
 
 let timer: ReturnType<typeof setInterval>;
 onMounted(() => {
@@ -92,6 +97,48 @@ async function onSearchCountryCity(citySummary: CitySummary) {
     console.error("Search failed:", err);
   }
 }
+
+function openConverter(city: CityResult) {
+  converterCity.value = city;
+  selectedCity.value = null;
+}
+
+function onCloseConverter() {
+  converterCity.value = null;
+}
+
+function onCityContextmenu(city: CityResult | CitySummary, e: MouseEvent) {
+  showMenu(e.clientX, e.clientY, [
+    {
+      label: "时区对比",
+      icon: "🕐",
+      action: async () => {
+        if ("timezone" in city && city.timezone) {
+          openConverter(city as CityResult);
+        } else {
+          const query = (city as CitySummary).name_cn || (city as CitySummary).name;
+          try {
+            const result = await invoke<SearchResponse>("search_cities", { query });
+            const found = result.cities.find(c => c.geonameid === (city as CitySummary).geonameid);
+            if (found) openConverter(found);
+          } catch (err) {
+            console.error("Search failed:", err);
+          }
+        }
+      },
+    },
+  ]);
+}
+
+function onRecentContextmenu(city: CityResult, e: MouseEvent) {
+  showMenu(e.clientX, e.clientY, [
+    {
+      label: "时区对比",
+      icon: "🕐",
+      action: () => openConverter(city),
+    },
+  ]);
+}
 </script>
 
 <template>
@@ -102,11 +149,19 @@ async function onSearchCountryCity(citySummary: CitySummary) {
       @recent="addRecent"
       :trigger-query="triggerQuery"
     />
+
+    <TimezoneConverter
+      v-if="converterCity"
+      :cityA="converterCity"
+      @close="onCloseConverter"
+    />
+
     <ResultList
       v-if="searchResult"
       :result="searchResult"
       @select="onSelectCity"
       @searchCountryCity="onSearchCountryCity"
+      @contextmenu="onCityContextmenu"
     />
     <div v-else-if="recentCities.length > 0" class="recent-list">
       <div class="recent-title">最近搜索</div>
@@ -115,6 +170,7 @@ async function onSearchCountryCity(citySummary: CitySummary) {
         :key="city.geonameid"
         class="recent-item"
         @click="onClickRecent(city.name_cn || city.name)"
+        @contextmenu.prevent="onRecentContextmenu(city, $event)"
       >
         <div class="left">
           <span class="capital" :title="city.is_capital ? '首都' : ''">{{ city.is_capital ? '★' : '' }}</span>
@@ -130,7 +186,7 @@ async function onSearchCountryCity(citySummary: CitySummary) {
       </div>
     </div>
 
-    <CityDetail v-if="selectedCity" :city="selectedCity" @close="onCloseDetail" />
+    <CityDetail v-if="selectedCity" :city="selectedCity" @close="onCloseDetail" @contextmenu="onCityContextmenu" />
   </div>
 </template>
 

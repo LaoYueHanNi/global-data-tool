@@ -8,6 +8,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   select: [city: CityResult];
+  contextmenu: [city: CityResult, e: MouseEvent];
 }>();
 
 const { time, offset } = useRealtimeTime(() => props.city.timezone);
@@ -27,7 +28,7 @@ function getFeatureLabel(code: string | null): string {
 </script>
 
 <template>
-  <div class="city-row" @click="emit('select', city)">
+  <div class="city-row" @click="emit('select', city)" @contextmenu.prevent="emit('contextmenu', city, $event)">
     <div class="left">
       <span class="capital" :title="city.is_capital ? '首都' : ''">{{ city.is_capital ? '★' : '' }}</span>
       <span class="name" :title="city.name_cn || city.name">{{ city.name_cn || city.name }}</span>
