@@ -1,7 +1,7 @@
 {
   "productName": "global-data-tool",
   "identifier": "com.oyw.global-data-tool",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "build": {
     "devUrl": "http://localhost:1420",
     "beforeDevCommand": "pnpm dev",
